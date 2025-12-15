@@ -133,15 +133,25 @@ button {
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* ================= RANDOM VIDEO POOL ================= */
-/* Mix of science, reality, nature, tech, street, chill */
+/* ================= MASSIVE RANDOM POOL ================= */
+/* NatGeo / Discovery-style: nature, animals, survival, science, reality */
 
 const VIDEO_POOL = [
-  "GO5FwsblpT8","aqz-KE-bpKQ","lM02vNMRRB0","EEIk7gwjgIM",
+  /* Nat Geo / Wildlife */
+  "7QpXzI8T7hE","JYhB8qkY5RQ","cM0v2L7k6GI","hW7n4rh4HaY",
+  "QZzZ8dQmZ1o","9kz4cFZ9p2A","aETNYyrqNYE","lM02vNMRRB0",
+
+  /* Discovery / Engineering */
+  "EEIk7gwjgIM","GO5FwsblpT8","oAVjF_7ensg","3uD6FJtpRZ4",
+  "RVMZxH1TIIQ","WYeFqSjvGaY","k7VfscZC0Ao","i93Z7zljQ7I",
+
+  /* Science / Explainers */
   "6_b7RDuLwcI","8Yy6nF6XKpI","uD4izuDMUQA","zBkVCpbNnkU",
   "iA6wRgwl7k0","r6w2M50_Xdk","QOCaacO8wus","cK-OGB5GxC0",
-  "XHTrLYShBRQ","HluANRwPyNo","yS1ibDImAYU","8COwK2tAnfs",
-  "DWcJFNfaw9c","5qap5aO4i9A","3uD6FJtpRZ4","oAVjF_7ensg"
+
+  /* Reality / POV / Travel */
+  "XHTrLYShBRQ","HluANRwPyNo","yS1ibDImAYU","DWcJFNfaw9c",
+  "8COwK2tAnfs","5qap5aO4i9A","aqz-KE-bpKQ"
 ];
 
 /* ================= STATE ================= */
@@ -162,7 +172,7 @@ function burstStatic() {
 }
 
 function randomStart() {
-  return Math.floor(30 + Math.random() * 240);
+  return Math.floor(60 + Math.random() * 300);
 }
 
 function randomVideo() {
