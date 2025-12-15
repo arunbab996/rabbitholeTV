@@ -1,134 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Channel TV</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #000;
-  height: 100%;
-  font-family: monospace;
-  overflow: hidden;
-}
-
-#tv {
-  width: 100vw;
-  height: 100vh;
-  background: #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-/* CRT frame */
-#screen {
-  width: 80vw;
-  height: 45vw;
-  max-width: 960px;
-  max-height: 540px;
-  background: black;
-  border-radius: 16px;
-  box-shadow: 
-    0 0 30px rgba(0,255,255,0.2),
-    inset 0 0 60px rgba(0,0,0,0.8);
-  overflow: hidden;
-  position: relative;
-}
-
-/* YouTube iframe */
-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-/* Noise overlay */
-#noise {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: url("https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif");
-  opacity: 0;
-  mix-blend-mode: screen;
-  transition: opacity 0.2s;
-}
-
-/* Scanlines */
-#scanlines {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.15),
-    rgba(0,0,0,0.15) 1px,
-    transparent 2px,
-    transparent 4px
-  );
-}
-
-/* Channel display */
-#channel {
-  position: absolute;
-  bottom: 12px;
-  right: 16px;
-  color: #0f0;
-  font-size: 14px;
-  text-shadow: 0 0 6px #0f0;
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>CRT Channel TV</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-<div id="tv">
-  <div id="screen">
-    <iframe id="player"></iframe>
-    <div id="noise"></div>
-    <div id="scanlines"></div>
-    <div id="channel">CH 1</div>
+
+<div class="tv-container">
+  <!-- Screen mask -->
+  <div class="screen">
+    <iframe
+      id="player"
+      allow="autoplay; encrypted-media"
+      allowfullscreen>
+    </iframe>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="channel-label">CH <span id="ch">1</span></div>
   </div>
+
+  <!-- TV frame -->
+  <img src="tv-frame.jpg" class="tv-frame" />
 </div>
 
-<script>
-const channels = [
-  "https://www.youtube.com/embed/videoseries?list=PL8fVUTBmJhHJmpP8lzU3c6M1B-7V0eQ8Z&autoplay=1",
-  "https://www.youtube.com/embed/videoseries?list=PLrEnWoR732-BHrPp_Pm8_VleD68f9s14-&autoplay=1",
-  "https://www.youtube.com/embed/videoseries?list=PLkLimRXN6NKzI1U4t4DgkXz_pH6QZK2n-&autoplay=1",
-  "https://www.youtube.com/embed/videoseries?list=PL8fVUTBmJhHLc36W9fEKh_T3p8M3vRZKm&autoplay=1"
-];
-
-let current = 0;
-const player = document.getElementById("player");
-const noise = document.getElementById("noise");
-const channelLabel = document.getElementById("channel");
-
-function showNoise() {
-  noise.style.opacity = 0.35;
-  setTimeout(() => noise.style.opacity = 0, 250);
-}
-
-function loadChannel(index) {
-  showNoise();
-  current = (index + channels.length) % channels.length;
-  player.src = channels[current];
-  channelLabel.textContent = `CH ${current + 1}`;
-}
-
-loadChannel(0);
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowUp") loadChannel(current + 1);
-  if (e.key === "ArrowDown") loadChannel(current - 1);
-  if (e.key >= "1" && e.key <= "9") {
-    const n = parseInt(e.key) - 1;
-    if (channels[n]) loadChannel(n);
-  }
-});
-</script>
+<script src="tv.js"></script>
 </body>
 </html>
