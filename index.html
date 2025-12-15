@@ -12,7 +12,6 @@ html, body {
   height: 100%;
   background: black;
   overflow: hidden;
-  cursor: pointer;
 }
 
 /* Screen */
@@ -20,15 +19,7 @@ html, body {
   position: fixed;
   inset: 0;
   background: black;
-  overflow: hidden;
   filter: contrast(1.1) saturate(1.15);
-}
-
-/* Video */
-.screen iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
 }
 
 /* Scanlines */
@@ -56,21 +47,7 @@ html, body {
   z-index: 6;
 }
 
-/* Hint */
-.hint {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0f0;
-  font-family: monospace;
-  font-size: 20px;
-  background: rgba(0,0,0,0.6);
-  z-index: 7;
-}
-
-/* Channel number */
+/* Overlays */
 .channel {
   position: absolute;
   top: 16px;
@@ -79,17 +56,16 @@ html, body {
   font-family: monospace;
   font-size: 18px;
   text-shadow: 0 0 6px #0f0;
-  z-index: 8;
+  z-index: 7;
 }
 
-/* Controls */
 .controls {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  z-index: 9;
   display: flex;
   gap: 10px;
+  z-index: 7;
 }
 
 button {
@@ -100,85 +76,143 @@ button {
   font-family: monospace;
   cursor: pointer;
 }
+
+.hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f0;
+  font-family: monospace;
+  font-size: 20px;
+  background: rgba(0,0,0,0.6);
+  z-index: 8;
+}
 </style>
 </head>
 
 <body>
 
-<div class="screen" id="screen">
-  <div class="static" id="static"></div>
+<div class="screen">
+  <div id="player"></div>
   <div class="scanlines"></div>
+  <div class="static" id="static"></div>
+
+  <div class="channel" id="channelLabel">CH 1</div>
+
+  <div class="controls">
+    <button id="unmute">UNMUTE</button>
+    <button id="skip">SKIP</button>
+  </div>
+
   <div class="hint" id="hint">CLICK TO TURN ON</div>
 </div>
 
+<script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
-/* Known-good embeddable videos */
-const channels = [
-  { ch: 3, id: "GO5FwsblpT8" },
-  { ch: 7, id: "6_b7RDuLwcI" },
-  { ch: 12, id: "lM02vNMRRB0" },
-  { ch: 18, id: "8Yy6nF6XKpI" },
-  { ch: 42, id: "aqz-KE-bpKQ" }
-];
+/* ---------------- CHANNEL DEFINITIONS ---------------- */
 
-const screen = document.getElementById("screen");
-const staticFx = document.getElementById("static");
-const hint = document.getElementById("hint");
+const CHANNELS = {
+  1: {
+    name: "SPACE",
+    videos: ["GO5FwsblpT8", "aqz-KE-bpKQ", "lM02vNMRRB0"]
+  },
+  2: {
+    name: "SCIENCE",
+    videos: ["6_b7RDuLwcI", "8Yy6nF6XKpI", "GO5FwsblpT8"]
+  },
+  3: {
+    name: "CHILL",
+    videos: ["lM02vNMRRB0", "aqz-KE-bpKQ"]
+  }
+};
 
-let started = false;
+let currentChannel = 1;
+let player;
 let muted = true;
+let started = false;
 
-function pickChannel() {
-  return channels[Math.floor(Math.random() * channels.length)];
+/* ---------------- HELPERS ---------------- */
+
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-/* Faster-seeking range (earlier = less buffering) */
 function randomStart() {
-  return Math.floor(20 + Math.random() * 180);
+  return Math.floor(30 + Math.random() * 180);
 }
 
-function burstStatic(longer = false) {
-  staticFx.style.opacity = "0.45";
-  setTimeout(() => staticFx.style.opacity = "0", longer ? 500 : 250);
+function burstStatic() {
+  const s = document.getElementById("static");
+  s.style.opacity = "0.4";
+  setTimeout(() => s.style.opacity = "0", 300);
 }
 
-function tuneChannel() {
-  const { ch, id } = pickChannel();
+/* ---------------- YT PLAYER ---------------- */
+
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player("player", {
+    width: "100%",
+    height: "100%",
+    videoId: null,
+    playerVars: {
+      autoplay: 0,
+      controls: 0,
+      rel: 0,
+      playsinline: 1
+    }
+  });
+}
+
+/* ---------------- TV LOGIC ---------------- */
+
+function tuneChannel(ch) {
+  currentChannel = ch;
+  const channel = CHANNELS[ch];
+  const videoId = randomFrom(channel.videos);
   const start = randomStart();
 
-  burstStatic(true);
+  document.getElementById("channelLabel").textContent = `CH ${ch}`;
 
-  screen.innerHTML = `
-    <iframe
-      src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=${muted ? 1 : 0}&start=${start}&controls=0&rel=0&playsinline=1"
-      allow="autoplay"
-      allowfullscreen>
-    </iframe>
+  burstStatic();
 
-    <div class="static" id="static"></div>
-    <div class="scanlines"></div>
-    <div class="channel">CH ${ch}</div>
+  player.loadVideoById({
+    videoId,
+    startSeconds: start
+  });
 
-    <div class="controls">
-      <button id="unmute">${muted ? "UNMUTE" : "SOUND ON"}</button>
-      <button id="skip">SKIP</button>
-    </div>
-  `;
-
-  document.getElementById("skip").onclick = tuneChannel;
-
-  document.getElementById("unmute").onclick = () => {
-    muted = false;
-    tuneChannel();
-  };
+  if (muted) player.mute();
+  else player.unMute();
 }
 
+function powerOn() {
+  document.getElementById("hint").style.display = "none";
+  tuneChannel(currentChannel);
+  started = true;
+}
+
+/* ---------------- CONTROLS ---------------- */
+
 document.body.addEventListener("click", () => {
-  if (!started) {
-    hint.style.display = "none";
-    started = true;
-    tuneChannel();
-  }
+  if (!started) powerOn();
+});
+
+document.getElementById("skip").onclick = () => {
+  if (started) tuneChannel(currentChannel);
+};
+
+document.getElementById("unmute").onclick = () => {
+  muted = false;
+  player.unMute();
+};
+
+/* Keyboard channel switch */
+document.addEventListener("keydown", e => {
+  if (e.key === "1") tuneChannel(1);
+  if (e.key === "2") tuneChannel(2);
+  if (e.key === "3") tuneChannel(3);
 });
 </script>
 
