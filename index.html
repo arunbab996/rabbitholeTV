@@ -15,18 +15,14 @@ html, body {
   cursor: pointer;
 }
 
-/* CRT screen */
 .screen {
   position: fixed;
   inset: 0;
   background: black;
   overflow: hidden;
-
-  /* CRT feel */
   filter: contrast(1.15) saturate(1.2);
 }
 
-/* YouTube video */
 .screen iframe {
   width: 100%;
   height: 100%;
@@ -34,7 +30,6 @@ html, body {
   transform: scale(1.02);
 }
 
-/* Scanlines */
 .scanlines {
   position: absolute;
   inset: 0;
@@ -49,7 +44,6 @@ html, body {
   z-index: 5;
 }
 
-/* Static burst */
 .static {
   position: absolute;
   inset: 0;
@@ -59,19 +53,15 @@ html, body {
   z-index: 6;
 }
 
-/* Hint */
 .hint {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-
   color: #0f0;
   font-family: monospace;
   font-size: 20px;
-  letter-spacing: 1px;
-
   background: rgba(0,0,0,0.6);
   z-index: 7;
 }
@@ -87,18 +77,8 @@ html, body {
 </div>
 
 <script>
-/* Kurzgesagt video IDs (finite = reliable) */
-const videos = [
-  "hOfRN0KihOU",
-  "zBkVCpbNnkU",
-  "uD4izuDMUQA",
-  "xZbcwi7SfZE",
-  "iA6wRgwl7k0",
-  "r6w2M50_Xdk",
-  "QOCaacO8wus",
-  "cK-OGB5GxC0",
-  "8COwK2tAnfs"
-];
+/* Kurzgesagt OFFICIAL uploads playlist */
+const PLAYLIST_ID = "UUj0yQnbV9nNqgFjz5uQH0nA";
 
 const screen = document.getElementById("screen");
 const staticFx = document.getElementById("static");
@@ -106,8 +86,8 @@ const hint = document.getElementById("hint");
 
 let started = false;
 
-function randomVideo() {
-  return videos[Math.floor(Math.random() * videos.length)];
+function randomIndex() {
+  return Math.floor(Math.random() * 50);
 }
 
 function randomStart() {
@@ -119,12 +99,19 @@ function burstStatic() {
   setTimeout(() => staticFx.style.opacity = "0", 250);
 }
 
-function playRandom() {
+function playRandomFromPlaylist() {
   burstStatic();
 
   screen.innerHTML = `
     <iframe
-      src="https://www.youtube.com/embed/${randomVideo()}?autoplay=1&mute=1&start=${randomStart()}&controls=0&rel=0&modestbranding=1"
+      src="https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}
+           &index=${randomIndex()}
+           &start=${randomStart()}
+           &autoplay=1
+           &mute=1
+           &controls=0
+           &rel=0
+           &modestbranding=1"
       allow="autoplay"
       allowfullscreen>
     </iframe>
@@ -138,7 +125,7 @@ document.body.addEventListener("click", () => {
     hint.style.display = "none";
     started = true;
   }
-  playRandom();
+  playRandomFromPlaylist();
 });
 </script>
 
