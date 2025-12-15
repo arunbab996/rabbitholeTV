@@ -15,18 +15,15 @@ html, body {
   font-family: monospace;
 }
 
-/* Screen */
 .screen {
   position: fixed;
   inset: 0;
   background: black;
 }
 
-/* Player */
 #player { width: 100%; height: 100%; }
 #player iframe { pointer-events: none; }
 
-/* Hide title area */
 .crt-mask {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -40,7 +37,6 @@ html, body {
   z-index: 10;
 }
 
-/* Scanlines */
 .scanlines {
   position: absolute;
   inset: 0;
@@ -55,7 +51,6 @@ html, body {
   z-index: 6;
 }
 
-/* Static burst */
 .static {
   position: absolute;
   inset: 0;
@@ -65,7 +60,6 @@ html, body {
   z-index: 7;
 }
 
-/* Channel label */
 .channel {
   position: absolute;
   top: 14px;
@@ -76,7 +70,6 @@ html, body {
   z-index: 12;
 }
 
-/* Controls */
 .controls {
   position: absolute;
   bottom: 20px;
@@ -116,21 +109,32 @@ button {
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* ================= EXTREMELY DIVERSE VIDEO POOL ================= */
-/* Add endlessly. Any subject. Chaos is the point. */
+/* ================= LARGE VIDEO POOL ================= */
 
 const VIDEO_POOL = [
-  // Science / Docs
   "GO5FwsblpT8","6_b7RDuLwcI","EEIk7gwjgIM","3uD6FJtpRZ4",
-  // Nature / Wildlife
   "aqz-KE-bpKQ","8COwK2tAnfs","lM02vNMRRB0",
-  // Reality / Travel / Vlogs
   "XHTrLYShBRQ","HluANRwPyNo","DWcJFNfaw9c","yS1ibDImAYU",
-  // Music / Ambient / Random
   "5qap5aO4i9A","oAVjF_7ensg",
-  // Internet chaos
   "dQw4w9WgXcQ","9bZkp7q19f0","C0DPdy98e4c"
 ];
+
+/* ================= SHUFFLE BAG ================= */
+
+let bag = [];
+
+function refillBag() {
+  bag = [...VIDEO_POOL];
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+}
+
+function nextVideo() {
+  if (bag.length === 0) refillBag();
+  return bag.pop();
+}
 
 /* ================= STATE ================= */
 
@@ -145,10 +149,6 @@ function burstStatic() {
   const s = document.getElementById("static");
   s.style.opacity = "0.45";
   setTimeout(() => s.style.opacity = "0", 300);
-}
-
-function randomVideo() {
-  return VIDEO_POOL[Math.floor(Math.random() * VIDEO_POOL.length)];
 }
 
 function randomStart() {
@@ -180,7 +180,7 @@ window.onYouTubeIframeAPIReady = function () {
     events: {
       onReady: startTV,
       onStateChange: enforceBroadcast,
-      onError: playRandom
+      onError: playNext
     }
   });
 };
@@ -202,12 +202,12 @@ function enforceBroadcast(e) {
 
 /* ================= TV LOGIC ================= */
 
-function playRandom() {
+function playNext() {
   burstStatic();
   channel++;
   updateChannel();
 
-  const video = randomVideo();
+  const video = nextVideo();
   const start = randomStart();
   lockedTime = start;
 
@@ -220,13 +220,14 @@ function playRandom() {
 }
 
 function startTV() {
+  refillBag();
   updateChannel();
-  playRandom(); // autoplay immediately
+  playNext();
 }
 
 /* ================= CONTROLS ================= */
 
-document.getElementById("skip").onclick = playRandom;
+document.getElementById("skip").onclick = playNext;
 
 document.getElementById("muteBtn").onclick = () => {
   muted = !muted;
