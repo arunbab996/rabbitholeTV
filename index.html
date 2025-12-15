@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Random TV</title>
+<title>Broadcast TV</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <style>
@@ -25,9 +25,11 @@ html, body {
 
 /* Player */
 #player { width: 100%; height: 100%; }
-#player iframe { pointer-events: none; }
+#player iframe {
+  pointer-events: none; /* no interaction */
+}
 
-/* Masks & Effects */
+/* CRT mask (hides title) */
 .crt-mask {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -41,6 +43,7 @@ html, body {
   z-index: 9;
 }
 
+/* Scanlines */
 .scanlines {
   position: absolute;
   inset: 0;
@@ -51,17 +54,18 @@ html, body {
     transparent 3px,
     transparent 4px
   );
-  z-index: 5;
   pointer-events: none;
+  z-index: 5;
 }
 
+/* Static */
 .static {
   position: absolute;
   inset: 0;
   background: url("https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif");
   opacity: 0;
-  z-index: 6;
   pointer-events: none;
+  z-index: 6;
 }
 
 /* Channel label */
@@ -75,7 +79,7 @@ html, body {
   z-index: 10;
 }
 
-/* Controls */
+/* Controls (only channel surfing) */
 .controls {
   position: absolute;
   bottom: 20px;
@@ -111,6 +115,7 @@ button {
 <body>
 
 <div class="screen">
+
   <div id="player"></div>
 
   <div class="crt-mask"></div>
@@ -122,8 +127,6 @@ button {
   <div class="controls">
     <button id="chDown">CH −</button>
     <button id="chUp">CH +</button>
-    <button id="skip">SKIP</button>
-    <button id="unmute">UNMUTE</button>
   </div>
 
   <div class="hint" id="hint">LOADING TV…</div>
@@ -132,37 +135,30 @@ button {
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* ================= CHANNELS (DIVERSE) ================= */
+/* ================= CHANNELS = VIDEOS ================= */
+/* Each entry = ONE channel */
+/* Mixed: space, science, nature, reality */
 
 const CHANNELS = [
-  { name: "SPACE", videos: [
-    "GO5FwsblpT8","aqz-KE-bpKQ","lM02vNMRRB0","EEIk7gwjgIM","oAVjF_7ensg",
-    "1w8Z0UOXVaY","yS1ibDImAYU","fYzJqS3x0Jc","3uD6FJtpRZ4","k7VfscZC0Ao"
-  ]},
-  { name: "SCIENCE", videos: [
-    "6_b7RDuLwcI","8Yy6nF6XKpI","uD4izuDMUQA","zBkVCpbNnkU","iA6wRgwl7k0",
-    "r6w2M50_Xdk","QOCaacO8wus","cK-OGB5GxC0","hOfRN0KihOU"
-  ]},
-  { name: "NATURE", videos: [
-    "yS1ibDImAYU","fYzJqS3x0Jc","XHTrLYShBRQ","HluANRwPyNo","8COwK2tAnfs"
-  ]},
-  { name: "TECH", videos: [
-    "EEIk7gwjgIM","i93Z7zljQ7I","kBdfcR-8hEY","xZbcwi7SfZE","uD4izuDMUQA"
-  ]},
-  { name: "CHILL", videos: [
-    "5qap5aO4i9A","DWcJFNfaw9c","aqz-KE-bpKQ","lM02vNMRRB0","XHTrLYShBRQ"
-  ]},
-  { name: "DOCS", videos: [
-    "RVMZxH1TIIQ","WYeFqSjvGaY","k7VfscZC0Ao","3uD6FJtpRZ4","EEIk7gwjgIM"
-  ]}
+  { id: "GO5FwsblpT8" }, // space
+  { id: "aqz-KE-bpKQ" }, // nature
+  { id: "6_b7RDuLwcI" }, // science
+  { id: "EEIk7gwjgIM" }, // tech
+  { id: "XHTrLYShBRQ" }, // reality / travel
+  { id: "HluANRwPyNo" }, // street POV
+  { id: "8COwK2tAnfs" }, // nature
+  { id: "DWcJFNfaw9c" }, // chill
+  { id: "yS1ibDImAYU" }, // reality
+  { id: "3uD6FJtpRZ4" }  // doc
 ];
 
 /* ================= STATE ================= */
 
-let player, playerReady = false;
-let currentChannel = 0;
-let muted = true;
+let player;
+let playerReady = false;
 let poweredOn = false;
+let currentChannel = 0;
+let lockedTime = 0;
 
 /* ================= HELPERS ================= */
 
@@ -173,19 +169,15 @@ function burstStatic() {
 }
 
 function randomStart() {
-  return Math.floor(20 + Math.random() * 240);
+  return Math.floor(20 + Math.random() * 180);
 }
 
-function randomChannelIndex() {
-  return Math.floor(Math.random() * CHANNELS.length);
+function updateChannelLabel() {
+  const ch = String(currentChannel + 1).padStart(2, "0");
+  document.getElementById("channelLabel").textContent = `CH ${ch}`;
 }
 
-function randomVideoFrom(ch) {
-  const pool = CHANNELS[ch].videos;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-/* ================= YT API ================= */
+/* ================= YOUTUBE API ================= */
 
 window.onYouTubeIframeAPIReady = function () {
   player = new YT.Player("player", {
@@ -206,63 +198,55 @@ window.onYouTubeIframeAPIReady = function () {
         playerReady = true;
         document.getElementById("hint").textContent = "CLICK TO TURN ON";
       },
-      onError: () => {
-        // auto-skip broken videos
-        playRandom();
-      }
+      onStateChange: enforceBroadcastRules,
+      onError: () => tuneChannel(currentChannel + 1)
     }
   });
 };
 
+/* ================= BROADCAST LOCK ================= */
+
+function enforceBroadcastRules(e) {
+  if (!poweredOn) return;
+
+  // If paused → force play
+  if (e.data === YT.PlayerState.PAUSED) {
+    player.playVideo();
+  }
+
+  // If seeking detected → snap back
+  const t = player.getCurrentTime();
+  if (Math.abs(t - lockedTime) > 3) {
+    player.seekTo(lockedTime, true);
+  } else {
+    lockedTime = t;
+  }
+}
+
 /* ================= TV LOGIC ================= */
 
-function updateChannelLabel() {
-  document.getElementById("channelLabel").textContent =
-    `CH ${currentChannel + 1}`;
-}
-
-function playRandom() {
+function tuneChannel(ch) {
   if (!playerReady) return;
 
-  currentChannel = randomChannelIndex();
+  currentChannel = (ch + CHANNELS.length) % CHANNELS.length;
   updateChannelLabel();
-
-  const videoId = randomVideoFrom(currentChannel);
-  const start = randomStart();
-
   burstStatic();
 
+  const start = randomStart();
+  lockedTime = start;
+
   player.loadVideoById({
-    videoId,
+    videoId: CHANNELS[currentChannel].id,
     startSeconds: start
   });
 
-  muted ? player.mute() : player.unMute();
-}
-
-function playCurrentChannel() {
-  if (!playerReady) return;
-
-  updateChannelLabel();
-
-  const videoId = randomVideoFrom(currentChannel);
-  const start = randomStart();
-
-  burstStatic();
-
-  player.loadVideoById({
-    videoId,
-    startSeconds: start
-  });
-
-  muted ? player.mute() : player.unMute();
+  player.mute(); // always broadcast-style muted start
 }
 
 function powerOn() {
-  if (!playerReady) return;
   poweredOn = true;
   document.getElementById("hint").style.display = "none";
-  playRandom();
+  tuneChannel(currentChannel);
 }
 
 /* ================= CONTROLS ================= */
@@ -271,32 +255,18 @@ document.body.addEventListener("click", () => {
   if (!poweredOn && playerReady) powerOn();
 });
 
-document.getElementById("skip").onclick = () => {
-  if (poweredOn) playRandom();
-};
-
-document.getElementById("unmute").onclick = () => {
-  muted = false;
-  player.unMute();
-};
-
 document.getElementById("chUp").onclick = () => {
-  if (!poweredOn) return;
-  currentChannel = (currentChannel + 1) % CHANNELS.length;
-  playCurrentChannel();
+  if (poweredOn) tuneChannel(currentChannel + 1);
 };
 
 document.getElementById("chDown").onclick = () => {
-  if (!poweredOn) return;
-  currentChannel =
-    (currentChannel - 1 + CHANNELS.length) % CHANNELS.length;
-  playCurrentChannel();
+  if (poweredOn) tuneChannel(currentChannel - 1);
 };
 
 document.addEventListener("keydown", e => {
   if (!poweredOn) return;
-  if (e.key === "ArrowUp") document.getElementById("chUp").click();
-  if (e.key === "ArrowDown") document.getElementById("chDown").click();
+  if (e.key === "ArrowUp") tuneChannel(currentChannel + 1);
+  if (e.key === "ArrowDown") tuneChannel(currentChannel - 1);
 });
 </script>
 
