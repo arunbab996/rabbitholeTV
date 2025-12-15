@@ -20,25 +20,24 @@ html, body {
   position: fixed;
   inset: 0;
   background: black;
-  filter: contrast(1.1) saturate(1.15);
 }
 
 /* Player */
 #player { width: 100%; height: 100%; }
 #player iframe { pointer-events: none; }
 
-/* CRT mask */
+/* Hide title area */
 .crt-mask {
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 52px;
+  height: 60px;
   background: linear-gradient(
     to bottom,
     rgba(0,0,0,0.95),
-    rgba(0,0,0,0.75),
+    rgba(0,0,0,0.8),
     rgba(0,0,0,0)
   );
-  z-index: 9;
+  z-index: 10;
 }
 
 /* Scanlines */
@@ -53,28 +52,28 @@ html, body {
     transparent 4px
   );
   pointer-events: none;
-  z-index: 5;
+  z-index: 6;
 }
 
-/* Static */
+/* Static burst */
 .static {
   position: absolute;
   inset: 0;
   background: url("https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif");
   opacity: 0;
   pointer-events: none;
-  z-index: 6;
+  z-index: 7;
 }
 
 /* Channel label */
 .channel {
   position: absolute;
-  top: 16px;
+  top: 14px;
   right: 20px;
   color: #0f0;
   font-size: 18px;
   text-shadow: 0 0 6px #0f0;
-  z-index: 10;
+  z-index: 12;
 }
 
 /* Controls */
@@ -83,29 +82,16 @@ html, body {
   bottom: 20px;
   right: 20px;
   display: flex;
-  gap: 10px;
-  z-index: 10;
+  gap: 12px;
+  z-index: 12;
 }
 
 button {
   background: rgba(0,0,0,0.7);
   color: #0f0;
   border: 1px solid #0f0;
-  padding: 8px 14px;
+  padding: 8px 16px;
   cursor: pointer;
-}
-
-/* Hint */
-.hint {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0f0;
-  font-size: 20px;
-  background: rgba(0,0,0,0.6);
-  z-index: 11;
 }
 </style>
 </head>
@@ -113,61 +99,44 @@ button {
 <body>
 
 <div class="screen">
-
   <div id="player"></div>
 
   <div class="crt-mask"></div>
   <div class="scanlines"></div>
   <div class="static" id="static"></div>
 
-  <div class="channel" id="channelLabel">CH —</div>
+  <div class="channel" id="channelLabel">CH 01</div>
 
   <div class="controls">
     <button id="skip">SKIP</button>
     <button id="muteBtn">MUTE</button>
   </div>
-
-  <div class="hint" id="hint">LOADING TV…</div>
 </div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* ================= RANDOM VIDEO POOL ================= */
-/* Casey Neistat + FunForLouis + travel / reality vibe */
-/* Known embeddable clips + auto-skip on failure */
+/* ================= EXTREMELY DIVERSE VIDEO POOL ================= */
+/* Add endlessly. Any subject. Chaos is the point. */
 
 const VIDEO_POOL = [
-  /* Casey Neistat */
-  "n2XcPjZ9k7k",
-  "v6Z7zF3c9Jg",
-  "b0P5k0dQF2M",
-  "ZK4wRjU7q9g",
-  "kYcJbM0sY9E",
-
-  /* FunForLouis */
-  "p8V9Yy6o5eA",
-  "m0nH2wJ9Qx4",
-  "D6E4X3pQ4nM",
-  "y7w9YV2cFqQ",
-  "J8K7XnC5G2M",
-
-  /* Similar travel / reality / vlog energy */
-  "XHTrLYShBRQ",
-  "HluANRwPyNo",
-  "yS1ibDImAYU",
-  "DWcJFNfaw9c",
-  "8COwK2tAnfs",
-  "aqz-KE-bpKQ"
+  // Science / Docs
+  "GO5FwsblpT8","6_b7RDuLwcI","EEIk7gwjgIM","3uD6FJtpRZ4",
+  // Nature / Wildlife
+  "aqz-KE-bpKQ","8COwK2tAnfs","lM02vNMRRB0",
+  // Reality / Travel / Vlogs
+  "XHTrLYShBRQ","HluANRwPyNo","DWcJFNfaw9c","yS1ibDImAYU",
+  // Music / Ambient / Random
+  "5qap5aO4i9A","oAVjF_7ensg",
+  // Internet chaos
+  "dQw4w9WgXcQ","9bZkp7q19f0","C0DPdy98e4c"
 ];
 
 /* ================= STATE ================= */
 
 let player;
-let playerReady = false;
-let poweredOn = false;
+let channel = 1;
 let muted = true;
-let channelNumber = 1;
 let lockedTime = 0;
 
 /* ================= HELPERS ================= */
@@ -178,17 +147,17 @@ function burstStatic() {
   setTimeout(() => s.style.opacity = "0", 300);
 }
 
-function randomStart() {
-  return Math.floor(60 + Math.random() * 300);
-}
-
 function randomVideo() {
   return VIDEO_POOL[Math.floor(Math.random() * VIDEO_POOL.length)];
 }
 
-function updateChannelLabel() {
+function randomStart() {
+  return Math.floor(60 + Math.random() * 400);
+}
+
+function updateChannel() {
   document.getElementById("channelLabel").textContent =
-    `CH ${String(channelNumber).padStart(2, "0")}`;
+    `CH ${String(channel).padStart(2, "0")}`;
 }
 
 /* ================= YOUTUBE API ================= */
@@ -198,7 +167,8 @@ window.onYouTubeIframeAPIReady = function () {
     width: "100%",
     height: "100%",
     playerVars: {
-      autoplay: 0,
+      autoplay: 1,
+      mute: 1,
       controls: 0,
       disablekb: 1,
       fs: 0,
@@ -208,21 +178,16 @@ window.onYouTubeIframeAPIReady = function () {
       playsinline: 1
     },
     events: {
-      onReady: () => {
-        playerReady = true;
-        document.getElementById("hint").textContent = "CLICK TO TURN ON";
-      },
+      onReady: startTV,
       onStateChange: enforceBroadcast,
-      onError: playRandomChannel
+      onError: playRandom
     }
   });
 };
 
-/* ================= BROADCAST LOCK ================= */
+/* ================= LOCK PLAYBACK ================= */
 
 function enforceBroadcast(e) {
-  if (!poweredOn) return;
-
   if (e.data === YT.PlayerState.PAUSED) {
     player.playVideo();
   }
@@ -237,53 +202,38 @@ function enforceBroadcast(e) {
 
 /* ================= TV LOGIC ================= */
 
-function playRandomChannel() {
-  if (!playerReady) return;
-
+function playRandom() {
   burstStatic();
-  channelNumber++;
-  updateChannelLabel();
+  channel++;
+  updateChannel();
 
-  const videoId = randomVideo();
+  const video = randomVideo();
   const start = randomStart();
   lockedTime = start;
 
   player.loadVideoById({
-    videoId,
+    videoId: video,
     startSeconds: start
   });
 
   muted ? player.mute() : player.unMute();
 }
 
-function powerOn() {
-  poweredOn = true;
-  document.getElementById("hint").style.display = "none";
-  updateChannelLabel();
-  playRandomChannel();
+function startTV() {
+  updateChannel();
+  playRandom(); // autoplay immediately
 }
 
 /* ================= CONTROLS ================= */
 
-document.body.addEventListener("click", () => {
-  if (!poweredOn && playerReady) powerOn();
-});
-
-document.getElementById("skip").onclick = () => {
-  if (poweredOn) playRandomChannel();
-};
+document.getElementById("skip").onclick = playRandom;
 
 document.getElementById("muteBtn").onclick = () => {
   muted = !muted;
   muted ? player.mute() : player.unMute();
-  document.getElementById("muteBtn").textContent = muted ? "MUTE" : "UNMUTE";
+  document.getElementById("muteBtn").textContent =
+    muted ? "MUTE" : "UNMUTE";
 };
-
-document.addEventListener("keydown", e => {
-  if (!poweredOn) return;
-  if (e.key === " ") playRandomChannel();
-  if (e.key.toLowerCase() === "m") document.getElementById("muteBtn").click();
-});
 </script>
 
 </body>
