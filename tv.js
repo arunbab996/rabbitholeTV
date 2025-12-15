@@ -1,23 +1,86 @@
-const channels = [
-  "https://www.youtube.com/embed/videoseries?list=PL8fVUTBmJhHJmpP8lzU3c6M1B-7V0eQ8Z&autoplay=1&mute=1",
-  "https://www.youtube.com/embed/videoseries?list=PLrEnWoR732-BHrPp_Pm8_VleD68f9s14-&autoplay=1&mute=1",
-  "https://www.youtube.com/embed/videoseries?list=PLkLimRXN6NKzI1U4t4DgkXz_pH6QZK2n-&autoplay=1&mute=1"
-];
+let player;
+let poweredOn = false;
+let interacted = false;
 
-let current = 0;
-const player = document.getElementById("player");
-const ch = document.getElementById("ch");
+/* Kurzgesagt Uploads playlist */
+const PLAYLIST_ID = "UUj0yQnbV9nNqgFjz5uQH0nA";
 
-function loadChannel(i) {
-  current = (i + channels.length) % channels.length;
-  player.src = channels[current];
-  ch.textContent = current + 1;
+function randomIndex() {
+  return Math.floor(Math.random() * 50);
 }
 
-loadChannel(0);
+function randomStart() {
+  return Math.floor(Math.random() * 300);
+}
 
-/* Keyboard controls (temporary remote) */
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowUp") loadChannel(current + 1);
-  if (e.key === "ArrowDown") loadChannel(current - 1);
+/* Load YouTube API */
+const tag = document.createElement("script");
+tag.src = "https://www.youtube.com/iframe_api";
+document.body.appendChild(tag);
+
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player("player", {
+    height: "100%",
+    width: "100%",
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      mute: 1,
+      modestbranding: 1,
+      rel: 0,
+      listType: "playlist",
+      list: PLAYLIST_ID,
+      index: randomIndex(),
+      start: randomStart()
+    }
+  });
+}
+
+/* Static effect */
+function burstStatic() {
+  const s = document.querySelector(".static");
+  s.style.opacity = 0.35;
+  setTimeout(() => s.style.opacity = 0, 300);
+}
+
+/* Power toggle */
+function togglePower() {
+  const screen = document.getElementById("screen");
+
+  if (!poweredOn) {
+    screen.classList.remove("off");
+    burstStatic();
+    poweredOn = true;
+    setTimeout(() => player.playVideo(), 300);
+  } else {
+    player.stopVideo();
+    screen.classList.add("off");
+    poweredOn = false;
+  }
+}
+
+/* Channel change */
+function changeChannel() {
+  if (!poweredOn) return;
+
+  burstStatic();
+  player.loadPlaylist({
+    list: PLAYLIST_ID,
+    index: randomIndex(),
+    startSeconds: randomStart()
+  });
+}
+
+/* Knob click */
+document.getElementById("knob").addEventListener("click", () => {
+  if (!interacted) {
+    player.unMute();
+    interacted = true;
+  }
+
+  if (!poweredOn) {
+    togglePower();
+  } else {
+    changeChannel();
+  }
 });
