@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>CRT TV</title>
+<title>Random TV</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <style>
@@ -27,7 +27,7 @@ html, body {
 #player { width: 100%; height: 100%; }
 #player iframe { pointer-events: none; }
 
-/* Overlays */
+/* Masks & Effects */
 .crt-mask {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -132,34 +132,29 @@ button {
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* ================= CHANNEL POOLS ================= */
-/* All IDs here are known embeddable at time of writing */
-/* If any break later, error handler auto-skips */
+/* ================= CHANNELS (DIVERSE) ================= */
 
 const CHANNELS = [
-  {
-    name: "SPACE",
-    videos: [
-      "GO5FwsblpT8","aqz-KE-bpKQ","lM02vNMRRB0","EEIk7gwjgIM",
-      "oAVjF_7ensg","1w8Z0UOXVaY","yS1ibDImAYU","fYzJqS3x0Jc",
-      "3uD6FJtpRZ4","k7VfscZC0Ao","WYeFqSjvGaY","RVMZxH1TIIQ"
-    ]
-  },
-  {
-    name: "SCIENCE",
-    videos: [
-      "6_b7RDuLwcI","8Yy6nF6XKpI","uD4izuDMUQA","zBkVCpbNnkU",
-      "iA6wRgwl7k0","r6w2M50_Xdk","QOCaacO8wus","cK-OGB5GxC0",
-      "hOfRN0KihOU","xZbcwi7SfZE","i93Z7zljQ7I","kBdfcR-8hEY"
-    ]
-  },
-  {
-    name: "CHILL",
-    videos: [
-      "5qap5aO4i9A","DWcJFNfaw9c","HluANRwPyNo","XHTrLYShBRQ",
-      "8COwK2tAnfs","aqz-KE-bpKQ","lM02vNMRRB0","yS1ibDImAYU"
-    ]
-  }
+  { name: "SPACE", videos: [
+    "GO5FwsblpT8","aqz-KE-bpKQ","lM02vNMRRB0","EEIk7gwjgIM","oAVjF_7ensg",
+    "1w8Z0UOXVaY","yS1ibDImAYU","fYzJqS3x0Jc","3uD6FJtpRZ4","k7VfscZC0Ao"
+  ]},
+  { name: "SCIENCE", videos: [
+    "6_b7RDuLwcI","8Yy6nF6XKpI","uD4izuDMUQA","zBkVCpbNnkU","iA6wRgwl7k0",
+    "r6w2M50_Xdk","QOCaacO8wus","cK-OGB5GxC0","hOfRN0KihOU"
+  ]},
+  { name: "NATURE", videos: [
+    "yS1ibDImAYU","fYzJqS3x0Jc","XHTrLYShBRQ","HluANRwPyNo","8COwK2tAnfs"
+  ]},
+  { name: "TECH", videos: [
+    "EEIk7gwjgIM","i93Z7zljQ7I","kBdfcR-8hEY","xZbcwi7SfZE","uD4izuDMUQA"
+  ]},
+  { name: "CHILL", videos: [
+    "5qap5aO4i9A","DWcJFNfaw9c","aqz-KE-bpKQ","lM02vNMRRB0","XHTrLYShBRQ"
+  ]},
+  { name: "DOCS", videos: [
+    "RVMZxH1TIIQ","WYeFqSjvGaY","k7VfscZC0Ao","3uD6FJtpRZ4","EEIk7gwjgIM"
+  ]}
 ];
 
 /* ================= STATE ================= */
@@ -168,7 +163,6 @@ let player, playerReady = false;
 let currentChannel = 0;
 let muted = true;
 let poweredOn = false;
-const played = {};
 
 /* ================= HELPERS ================= */
 
@@ -179,25 +173,19 @@ function burstStatic() {
 }
 
 function randomStart() {
-  return Math.floor(20 + Math.random() * 200);
+  return Math.floor(20 + Math.random() * 240);
 }
 
-function pickVideo(ch) {
-  if (!played[ch]) played[ch] = [];
+function randomChannelIndex() {
+  return Math.floor(Math.random() * CHANNELS.length);
+}
+
+function randomVideoFrom(ch) {
   const pool = CHANNELS[ch].videos;
-
-  if (played[ch].length >= pool.length - 1) played[ch] = [];
-
-  let v;
-  do {
-    v = pool[Math.floor(Math.random() * pool.length)];
-  } while (played[ch].includes(v));
-
-  played[ch].push(v);
-  return v;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
-/* ================= YOUTUBE API ================= */
+/* ================= YT API ================= */
 
 window.onYouTubeIframeAPIReady = function () {
   player = new YT.Player("player", {
@@ -219,8 +207,8 @@ window.onYouTubeIframeAPIReady = function () {
         document.getElementById("hint").textContent = "CLICK TO TURN ON";
       },
       onError: () => {
-        // 🚑 Auto-heal: skip broken video silently
-        tuneChannel(currentChannel);
+        // auto-skip broken videos
+        playRandom();
       }
     }
   });
@@ -233,14 +221,34 @@ function updateChannelLabel() {
     `CH ${currentChannel + 1}`;
 }
 
-function tuneChannel(ch) {
+function playRandom() {
   if (!playerReady) return;
 
-  const videoId = pickVideo(ch);
+  currentChannel = randomChannelIndex();
+  updateChannelLabel();
+
+  const videoId = randomVideoFrom(currentChannel);
   const start = randomStart();
 
   burstStatic();
+
+  player.loadVideoById({
+    videoId,
+    startSeconds: start
+  });
+
+  muted ? player.mute() : player.unMute();
+}
+
+function playCurrentChannel() {
+  if (!playerReady) return;
+
   updateChannelLabel();
+
+  const videoId = randomVideoFrom(currentChannel);
+  const start = randomStart();
+
+  burstStatic();
 
   player.loadVideoById({
     videoId,
@@ -254,7 +262,7 @@ function powerOn() {
   if (!playerReady) return;
   poweredOn = true;
   document.getElementById("hint").style.display = "none";
-  tuneChannel(currentChannel);
+  playRandom();
 }
 
 /* ================= CONTROLS ================= */
@@ -264,7 +272,7 @@ document.body.addEventListener("click", () => {
 });
 
 document.getElementById("skip").onclick = () => {
-  if (poweredOn) tuneChannel(currentChannel);
+  if (poweredOn) playRandom();
 };
 
 document.getElementById("unmute").onclick = () => {
@@ -275,14 +283,14 @@ document.getElementById("unmute").onclick = () => {
 document.getElementById("chUp").onclick = () => {
   if (!poweredOn) return;
   currentChannel = (currentChannel + 1) % CHANNELS.length;
-  tuneChannel(currentChannel);
+  playCurrentChannel();
 };
 
 document.getElementById("chDown").onclick = () => {
   if (!poweredOn) return;
   currentChannel =
     (currentChannel - 1 + CHANNELS.length) % CHANNELS.length;
-  tuneChannel(currentChannel);
+  playCurrentChannel();
 };
 
 document.addEventListener("keydown", e => {
