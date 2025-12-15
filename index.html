@@ -1,255 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rabbit Hole TV</title>
-    <style>
-        /* --- 1. RESET & ATMOSPHERE --- */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #1a120b; /* Dark room ambiance */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: sans-serif;
-        }
+<meta charset="UTF-8" />
+<title>Channel TV</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        /* The container for our "Scene" */
-        .scene-container {
-            position: relative;
-            max-width: 90vw;
-            max-height: 90vh;
-            /* Aspect ratio of the AI generated image (approx 16:9) */
-            aspect-ratio: 16/9; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-        }
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  height: 100%;
+  font-family: monospace;
+  overflow: hidden;
+}
 
-        /* --- 2. THE HARDWARE (Base Image) --- */
-        /* This pulls the specific front-view retro TV image directly */
-        .bg-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-        }
+#tv {
+  width: 100vw;
+  height: 100vh;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
 
-        /* --- 3. THE SCREEN (Calibrated Geometry) --- */
-        /* These values map the video rectangle to the glass CRT 
-           in the background image. If the image changes, these need recalibrating.
-        */
-        .screen-overlay {
-            position: absolute;
-            top: 36%;       /* Distance from top edge */
-            left: 40.5%;    /* Distance from left edge */
-            width: 19%;     /* Width relative to image */
-            height: 25%;    /* Height relative to image */
-            
-            background-color: #000;
-            z-index: 10;
-            overflow: hidden; /* Cuts off the sharp corners of YouTube */
-            
-            /* CRT Styling */
-            border-radius: 10% / 10%; /* The "Squircle" shape */
-            box-shadow: inset 0 0 10px rgba(0,0,0,1); /* Depth shadow */
-            transform: rotate(-0.5deg); /* Subtle tilt to match photo */
-        }
+/* CRT frame */
+#screen {
+  width: 80vw;
+  height: 45vw;
+  max-width: 960px;
+  max-height: 540px;
+  background: black;
+  border-radius: 16px;
+  box-shadow: 
+    0 0 30px rgba(0,255,255,0.2),
+    inset 0 0 60px rgba(0,0,0,0.8);
+  overflow: hidden;
+  position: relative;
+}
 
-        /* The YouTube Video Layer */
-        #tv-player {
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* DISABLES clicking on the video directly */
-            
-            /* The "Retro Filter" Stack */
-            filter: sepia(0.2) contrast(1.2) brightness(0.9) saturate(1.2);
-            
-            opacity: 0; /* Hidden by default (TV is off) */
-            transition: opacity 0.8s ease-in; /* Slow tube warm-up effect */
-        }
-        
-        #tv-player.active { opacity: 1; }
+/* YouTube iframe */
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
 
-        /* The Static Noise Layer (transitions) */
-        .static-noise {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif');
-            background-size: cover;
-            opacity: 0;
-            pointer-events: none;
-            mix-blend-mode: overlay;
-            transition: opacity 0.2s;
-        }
+/* Noise overlay */
+#noise {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: url("https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif");
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 0.2s;
+}
 
-        /* --- 4. THE CONTROLS (Ghost Buttons) --- */
-        .knob-trigger {
-            position: absolute;
-            cursor: pointer;
-            z-index: 20;
-            border-radius: 50%;
-            /* DEBUG MODE: Uncomment the background line below 
-               to see the red click zones if you get lost.
-            */
-            /* background: rgba(255, 0, 0, 0.4); */
-        }
+/* Scanlines */
+#scanlines {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.15),
+    rgba(0,0,0,0.15) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+}
 
-        /* Channel Knob Position */
-        .btn-channel {
-            top: 37%;
-            right: 36.5%;
-            width: 2.5%;
-            height: 4.5%;
-        }
-
-        /* Power Knob Position */
-        .btn-power {
-            top: 45%;
-            right: 36.5%;
-            width: 2.5%;
-            height: 4.5%;
-        }
-
-    </style>
+/* Channel display */
+#channel {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  color: #0f0;
+  font-size: 14px;
+  text-shadow: 0 0 6px #0f0;
+}
+</style>
 </head>
+
 <body>
+<div id="tv">
+  <div id="screen">
+    <iframe id="player"></iframe>
+    <div id="noise"></div>
+    <div id="scanlines"></div>
+    <div id="channel">CH 1</div>
+  </div>
+</div>
 
-    <div class="scene-container">
-        <img src="bg-image.png" class="bg-image" alt="Retro TV Room">
+<script>
+const channels = [
+  "https://www.youtube.com/embed/videoseries?list=PL8fVUTBmJhHJmpP8lzU3c6M1B-7V0eQ8Z&autoplay=1",
+  "https://www.youtube.com/embed/videoseries?list=PLrEnWoR732-BHrPp_Pm8_VleD68f9s14-&autoplay=1",
+  "https://www.youtube.com/embed/videoseries?list=PLkLimRXN6NKzI1U4t4DgkXz_pH6QZK2n-&autoplay=1",
+  "https://www.youtube.com/embed/videoseries?list=PL8fVUTBmJhHLc36W9fEKh_T3p8M3vRZKm&autoplay=1"
+];
 
-        <div class="screen-overlay">
-            <div id="tv-player"></div>
-            <div class="static-noise" id="static-layer"></div>
-        </div>
+let current = 0;
+const player = document.getElementById("player");
+const noise = document.getElementById("noise");
+const channelLabel = document.getElementById("channel");
 
-        <div class="knob-trigger btn-channel" onclick="changeChannel()" title="CLICK ME: Change Channel"></div>
-        <div class="knob-trigger btn-power" onclick="togglePower()" title="CLICK ME: Power On/Off"></div>
-    </div>
+function showNoise() {
+  noise.style.opacity = 0.35;
+  setTimeout(() => noise.style.opacity = 0, 250);
+}
 
-    <audio id="static-sfx">
-        <source src="https://www.soundjay.com/mechanical/sounds/tv-static-01.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="click-sfx">
-        <source src="https://www.soundjay.com/mechanical/sounds/switch-1.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="rain-sfx" loop>
-         <source src="https://www.soundjay.com/nature/sounds/rain-01.mp3" type="audio/mpeg">
-    </audio>
+function loadChannel(index) {
+  showNoise();
+  current = (index + channels.length) % channels.length;
+  player.src = channels[current];
+  channelLabel.textContent = `CH ${current + 1}`;
+}
 
-    <script>
-        // --- CONFIGURATION ---
-        
-        // The "Channels" (YouTube Video IDs)
-        // PM Note: Curate these to fit the "Vibe"
-        const videos = [
-            "dYw4meRWGd4", // Lava Lamps (Matches the image)
-            "W9y6N2d3DdM", // Atomic Clocks
-            "hM_t3444yvM", // Lego Engineering
-            "uD4izuDMUQA", // Future Timelapse
-            "GoW8Tf7hTGA", // Optimistic Nihilism
-            "L_LUpnjgPso"  // How CRT TVs Work (Meta)
-        ];
+loadChannel(0);
 
-        // State Management
-        let currentVideoIndex = 0;
-        let isPoweredOn = false;
-        let player;
-        
-        // Audio Handles
-        const staticSfx = document.getElementById('static-sfx');
-        const clickSfx = document.getElementById('click-sfx');
-        const rainSfx = document.getElementById('rain-sfx');
-        
-        // Volume Mix
-        clickSfx.volume = 0.5;
-        rainSfx.volume = 0.2; // Keep rain subtle
-
-        // --- YOUTUBE API SETUP ---
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player('tv-player', {
-                height: '100%',
-                width: '100%',
-                videoId: videos[currentVideoIndex],
-                playerVars: { 
-                    'controls': 0,        // No UI
-                    'disablekb': 1,       // No Keyboard
-                    'modestbranding': 1,  // Minimal Logos
-                    'rel': 0,             // No Related Vids
-                    'showinfo': 0,
-                    'iv_load_policy': 3   // No Annotations
-                },
-            });
-        }
-
-        // --- INTERACTION LOGIC ---
-
-        function togglePower() {
-            clickSfx.play();
-            
-            // Toggle State
-            isPoweredOn = !isPoweredOn;
-            const playerEl = document.getElementById('tv-player');
-            
-            if (isPoweredOn) {
-                // POWER ON SEQUENCE
-                
-                // 1. Start Ambiance (Browser requires interaction first)
-                if (rainSfx.paused) rainSfx.play();
-                
-                // 2. Play Static (Warmup)
-                playStatic(1200); 
-                
-                // 3. Show Video after delay
-                setTimeout(() => {
-                    playerEl.classList.add('active');
-                    player.playVideo();
-                }, 600);
-                
-            } else {
-                // POWER OFF SEQUENCE
-                playerEl.classList.remove('active');
-                player.pauseVideo();
-            }
-        }
-
-        function changeChannel() {
-            clickSfx.play();
-            
-            // Guard Clause: Don't change channel if TV is off
-            if (!isPoweredOn) return;
-
-            // 1. Visual Zap
-            playStatic(500); 
-            
-            // 2. Logic: Next Video
-            currentVideoIndex++;
-            if (currentVideoIndex >= videos.length) currentVideoIndex = 0;
-
-            // 3. Load Video (Small delay to hide the cut)
-            setTimeout(() => {
-                player.loadVideoById(videos[currentVideoIndex]);
-            }, 200);
-        }
-
-        // Helper: The Static Effect
-        function playStatic(duration) {
-            const staticLayer = document.getElementById('static-layer');
-            staticLayer.style.opacity = '0.6';
-            
-            staticSfx.currentTime = 0;
-            staticSfx.play();
-            
-            setTimeout(() => {
-                staticLayer.style.opacity = '0';
-            }, duration);
-        }
-    </script>
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowUp") loadChannel(current + 1);
+  if (e.key === "ArrowDown") loadChannel(current - 1);
+  if (e.key >= "1" && e.key <= "9") {
+    const n = parseInt(e.key) - 1;
+    if (channels[n]) loadChannel(n);
+  }
+});
+</script>
 </body>
 </html>
