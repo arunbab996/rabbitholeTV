@@ -2,29 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CRT TV</title>
+  <title>CRT TV TEST</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: lime;
+      font-family: monospace;
+    }
+    .msg {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="tv-container">
+<div class="msg">IF YOU SEE THIS, JS IS WORKING</div>
 
-  <!-- CRT SCREEN -->
-  <div class="screen off" id="screen">
-    <div id="player"></div>
-    <div class="scanlines"></div>
-    <div class="static"></div>
-    <div class="hint">CLICK TO TURN ON</div>
-  </div>
-
-  <!-- TV FRAME IMAGE -->
-  <img src="tv-frame.jpg" class="tv-frame" />
-
-</div>
-
-<!-- TV LOGIC -->
-<script src="tv.js"></script>
+<script>
+  alert("JS IS RUNNING");
+  document.body.addEventListener("click", () => {
+    document.body.innerHTML = "<h1 style='color:lime'>CLICK WORKS</h1>";
+  });
+</script>
 
 </body>
 </html>
