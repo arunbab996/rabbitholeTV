@@ -1,0 +1,82 @@
+html, body {
+  margin: 0;
+  background: #000;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Container matches image size */
+.tv-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* TV frame image */
+.tv-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* CRT screen window — TUNED FOR YOUR IMAGE */
+.screen {
+  position: absolute;
+
+  /* 🔧 Adjust these once visually */
+  top: 22%;
+  left: 20%;
+  width: 60%;
+  height: 46%;
+
+  background: black;
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 5;
+}
+
+/* YouTube video */
+.screen iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  transform: scale(1.02);
+  filter: contrast(1.1) saturate(1.2);
+}
+
+/* Scanlines */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.15),
+    rgba(0,0,0,0.15) 1px,
+    transparent 3px,
+    transparent 4px
+  );
+  pointer-events: none;
+}
+
+/* CRT vignette */
+.vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 80px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+
+/* Channel display */
+.channel-label {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  color: #0f0;
+  font-family: monospace;
+  font-size: 14px;
+  text-shadow: 0 0 6px #0f0;
+}
