@@ -1,34 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>CRT TV TEST</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      margin: 0;
-      background: black;
-      color: lime;
-      font-family: monospace;
-    }
-    .msg {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>CRT TV</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  background: black;
+  overflow: hidden;
+}
+.tv {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+.frame {
+  position: absolute;
+  inset: 0;
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.screen {
+  position: absolute;
+  top: 22%;
+  left: 20%;
+  width: 60%;
+  height: 46%;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: lime;
+  font-family: monospace;
+  font-size: 20px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="msg">IF YOU SEE THIS, JS IS WORKING</div>
+<div class="tv">
+  <div class="screen" id="screen">CLICK TO TURN ON</div>
+  <img src="tv-frame.jpg" class="frame">
+</div>
 
 <script>
-  alert("JS IS RUNNING");
-  document.body.addEventListener("click", () => {
-    document.body.innerHTML = "<h1 style='color:lime'>CLICK WORKS</h1>";
+  document.getElementById("screen").addEventListener("click", () => {
+    document.getElementById("screen").innerHTML =
+      "<iframe width='100%' height='100%' src='https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1' frameborder='0' allow='autoplay'></iframe>";
   });
 </script>
 
