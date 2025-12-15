@@ -12,6 +12,7 @@ html, body {
   height: 100%;
   background: black;
   overflow: hidden;
+  font-family: monospace;
 }
 
 /* Screen */
@@ -22,7 +23,7 @@ html, body {
   filter: contrast(1.1) saturate(1.15);
 }
 
-/* Scanlines */
+/* Overlays */
 .scanlines {
   position: absolute;
   inset: 0;
@@ -37,7 +38,6 @@ html, body {
   z-index: 5;
 }
 
-/* Static */
 .static {
   position: absolute;
   inset: 0;
@@ -47,13 +47,11 @@ html, body {
   z-index: 6;
 }
 
-/* Overlays */
 .channel {
   position: absolute;
   top: 16px;
   right: 20px;
   color: #0f0;
-  font-family: monospace;
   font-size: 18px;
   text-shadow: 0 0 6px #0f0;
   z-index: 7;
@@ -73,7 +71,6 @@ button {
   color: #0f0;
   border: 1px solid #0f0;
   padding: 8px 14px;
-  font-family: monospace;
   cursor: pointer;
 }
 
@@ -84,7 +81,6 @@ button {
   align-items: center;
   justify-content: center;
   color: #0f0;
-  font-family: monospace;
   font-size: 20px;
   background: rgba(0,0,0,0.6);
   z-index: 8;
@@ -96,43 +92,37 @@ button {
 
 <div class="screen">
   <div id="player"></div>
+
   <div class="scanlines"></div>
   <div class="static" id="static"></div>
 
-  <div class="channel" id="channelLabel">CH 1</div>
+  <div class="channel" id="channelLabel">CH —</div>
 
   <div class="controls">
     <button id="unmute">UNMUTE</button>
     <button id="skip">SKIP</button>
   </div>
 
-  <div class="hint" id="hint">CLICK TO TURN ON</div>
+  <div class="hint" id="hint">LOADING TV…</div>
 </div>
 
+<!-- YouTube Player API -->
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* ---------------- CHANNEL DEFINITIONS ---------------- */
+/* ---------------- CHANNELS ---------------- */
 
 const CHANNELS = {
-  1: {
-    name: "SPACE",
-    videos: ["GO5FwsblpT8", "aqz-KE-bpKQ", "lM02vNMRRB0"]
-  },
-  2: {
-    name: "SCIENCE",
-    videos: ["6_b7RDuLwcI", "8Yy6nF6XKpI", "GO5FwsblpT8"]
-  },
-  3: {
-    name: "CHILL",
-    videos: ["lM02vNMRRB0", "aqz-KE-bpKQ"]
-  }
+  1: { videos: ["GO5FwsblpT8", "aqz-KE-bpKQ"] },
+  2: { videos: ["6_b7RDuLwcI", "8Yy6nF6XKpI"] },
+  3: { videos: ["lM02vNMRRB0"] }
 };
 
 let currentChannel = 1;
-let player;
+let player = null;
+let playerReady = false;
 let muted = true;
-let started = false;
+let poweredOn = false;
 
 /* ---------------- HELPERS ---------------- */
 
@@ -150,32 +140,36 @@ function burstStatic() {
   setTimeout(() => s.style.opacity = "0", 300);
 }
 
-/* ---------------- YT PLAYER ---------------- */
+/* ---------------- YT API (FIXED) ---------------- */
 
-function onYouTubeIframeAPIReady() {
+window.onYouTubeIframeAPIReady = function () {
   player = new YT.Player("player", {
     width: "100%",
     height: "100%",
-    videoId: null,
     playerVars: {
       autoplay: 0,
       controls: 0,
       rel: 0,
       playsinline: 1
+    },
+    events: {
+      onReady: () => {
+        playerReady = true;
+        document.getElementById("hint").textContent = "CLICK TO TURN ON";
+      }
     }
   });
-}
+};
 
 /* ---------------- TV LOGIC ---------------- */
 
 function tuneChannel(ch) {
-  currentChannel = ch;
-  const channel = CHANNELS[ch];
-  const videoId = randomFrom(channel.videos);
+  if (!playerReady) return;
+
+  const videoId = randomFrom(CHANNELS[ch].videos);
   const start = randomStart();
 
   document.getElementById("channelLabel").textContent = `CH ${ch}`;
-
   burstStatic();
 
   player.loadVideoById({
@@ -188,28 +182,32 @@ function tuneChannel(ch) {
 }
 
 function powerOn() {
+  if (!playerReady) return;
+
   document.getElementById("hint").style.display = "none";
+  poweredOn = true;
   tuneChannel(currentChannel);
-  started = true;
 }
 
 /* ---------------- CONTROLS ---------------- */
 
 document.body.addEventListener("click", () => {
-  if (!started) powerOn();
+  if (!poweredOn && playerReady) {
+    powerOn();
+  }
 });
 
 document.getElementById("skip").onclick = () => {
-  if (started) tuneChannel(currentChannel);
+  if (poweredOn) tuneChannel(currentChannel);
 };
 
 document.getElementById("unmute").onclick = () => {
   muted = false;
-  player.unMute();
+  if (player) player.unMute();
 };
 
-/* Keyboard channel switch */
 document.addEventListener("keydown", e => {
+  if (!poweredOn) return;
   if (e.key === "1") tuneChannel(1);
   if (e.key === "2") tuneChannel(2);
   if (e.key === "3") tuneChannel(3);
