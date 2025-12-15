@@ -1,18 +1,20 @@
 html, body {
   margin: 0;
-  background: #000;
+  padding: 0;
+  width: 100%;
   height: 100%;
+  background: #000;
   overflow: hidden;
 }
 
-/* Container */
+/* Main container */
 .tv-container {
   position: relative;
   width: 100vw;
   height: 100vh;
 }
 
-/* Frame image */
+/* TV frame image */
 .tv-frame {
   position: absolute;
   inset: 0;
@@ -23,21 +25,25 @@ html, body {
   pointer-events: none;
 }
 
-/* CRT screen placement (eyeballed for your image) */
+/* CRT screen window (tuned for your image) */
 .screen {
   position: absolute;
+
+  /* 🔧 Screen placement */
   top: 22%;
   left: 20%;
   width: 60%;
   height: 46%;
+
   background: black;
   border-radius: 18px;
   overflow: hidden;
   z-index: 5;
+
   filter: contrast(1.1) saturate(1.2);
 }
 
-/* OFF state */
+/* Screen OFF */
 .screen.off {
   filter: brightness(0);
 }
@@ -61,6 +67,7 @@ html, body {
     transparent 4px
   );
   pointer-events: none;
+  z-index: 6;
 }
 
 /* Static burst */
@@ -70,17 +77,28 @@ html, body {
   background: url("https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif");
   opacity: 0;
   pointer-events: none;
+  z-index: 7;
   transition: opacity 0.2s;
 }
 
-/* Knob (right side) */
-.knob {
+/* Click hint */
+.hint {
   position: absolute;
-  right: 18%;
-  top: 46%;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  z-index: 20;
-  cursor: pointer;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #0f0;
+  font-family: monospace;
+  font-size: 18px;
+  letter-spacing: 1px;
+
+  background: rgba(0,0,0,0.6);
+  z-index: 8;
+}
+
+/* Hide hint when TV is on */
+.screen:not(.off) .hint {
+  display: none;
 }
