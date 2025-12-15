@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Random Broadcast TV</title>
+<title>Chaos TV</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <style>
@@ -52,8 +52,8 @@ html, body {
     transparent 3px,
     transparent 4px
   );
-  z-index: 5;
   pointer-events: none;
+  z-index: 5;
 }
 
 /* Static */
@@ -62,8 +62,8 @@ html, body {
   inset: 0;
   background: url("https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif");
   opacity: 0;
-  z-index: 6;
   pointer-events: none;
+  z-index: 6;
 }
 
 /* Channel label */
@@ -123,8 +123,7 @@ button {
   <div class="channel" id="channelLabel">CH —</div>
 
   <div class="controls">
-    <button id="chDown">CH −</button>
-    <button id="chUp">CH +</button>
+    <button id="skip">SKIP</button>
     <button id="muteBtn">MUTE</button>
   </div>
 
@@ -134,25 +133,15 @@ button {
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* ================= CHANNELS (MORE RANDOM) ================= */
-/* Each channel = pool of videos */
+/* ================= RANDOM VIDEO POOL ================= */
+/* Mix of science, reality, nature, tech, street, chill */
 
-const CHANNELS = [
-  { name: "SPACE", videos: [
-    "GO5FwsblpT8","aqz-KE-bpKQ","lM02vNMRRB0","EEIk7gwjgIM","oAVjF_7ensg"
-  ]},
-  { name: "SCIENCE", videos: [
-    "6_b7RDuLwcI","8Yy6nF6XKpI","uD4izuDMUQA","zBkVCpbNnkU","iA6wRgwl7k0"
-  ]},
-  { name: "NATURE", videos: [
-    "XHTrLYShBRQ","HluANRwPyNo","8COwK2tAnfs","yS1ibDImAYU"
-  ]},
-  { name: "REALITY", videos: [
-    "DWcJFNfaw9c","XHTrLYShBRQ","HluANRwPyNo","yS1ibDImAYU"
-  ]},
-  { name: "CHILL", videos: [
-    "5qap5aO4i9A","DWcJFNfaw9c","lM02vNMRRB0"
-  ]}
+const VIDEO_POOL = [
+  "GO5FwsblpT8","aqz-KE-bpKQ","lM02vNMRRB0","EEIk7gwjgIM",
+  "6_b7RDuLwcI","8Yy6nF6XKpI","uD4izuDMUQA","zBkVCpbNnkU",
+  "iA6wRgwl7k0","r6w2M50_Xdk","QOCaacO8wus","cK-OGB5GxC0",
+  "XHTrLYShBRQ","HluANRwPyNo","yS1ibDImAYU","8COwK2tAnfs",
+  "DWcJFNfaw9c","5qap5aO4i9A","3uD6FJtpRZ4","oAVjF_7ensg"
 ];
 
 /* ================= STATE ================= */
@@ -160,8 +149,8 @@ const CHANNELS = [
 let player;
 let playerReady = false;
 let poweredOn = false;
-let currentChannel = 0;
 let muted = true;
+let channelNumber = 1;
 let lockedTime = 0;
 
 /* ================= HELPERS ================= */
@@ -173,17 +162,16 @@ function burstStatic() {
 }
 
 function randomStart() {
-  return Math.floor(20 + Math.random() * 200);
+  return Math.floor(30 + Math.random() * 240);
 }
 
-function pickRandomVideo(ch) {
-  const pool = CHANNELS[ch].videos;
-  return pool[Math.floor(Math.random() * pool.length)];
+function randomVideo() {
+  return VIDEO_POOL[Math.floor(Math.random() * VIDEO_POOL.length)];
 }
 
 function updateChannelLabel() {
-  const ch = String(currentChannel + 1).padStart(2, "0");
-  document.getElementById("channelLabel").textContent = `CH ${ch}`;
+  document.getElementById("channelLabel").textContent =
+    `CH ${String(channelNumber).padStart(2, "0")}`;
 }
 
 /* ================= YOUTUBE API ================= */
@@ -208,7 +196,7 @@ window.onYouTubeIframeAPIReady = function () {
         document.getElementById("hint").textContent = "CLICK TO TURN ON";
       },
       onStateChange: enforceBroadcast,
-      onError: () => tuneChannel(currentChannel)
+      onError: playRandomChannel
     }
   });
 };
@@ -232,14 +220,14 @@ function enforceBroadcast(e) {
 
 /* ================= TV LOGIC ================= */
 
-function tuneChannel(ch) {
+function playRandomChannel() {
   if (!playerReady) return;
 
-  currentChannel = (ch + CHANNELS.length) % CHANNELS.length;
-  updateChannelLabel();
   burstStatic();
+  channelNumber++;
+  updateChannelLabel();
 
-  const videoId = pickRandomVideo(currentChannel);
+  const videoId = randomVideo();
   const start = randomStart();
   lockedTime = start;
 
@@ -254,7 +242,8 @@ function tuneChannel(ch) {
 function powerOn() {
   poweredOn = true;
   document.getElementById("hint").style.display = "none";
-  tuneChannel(currentChannel);
+  updateChannelLabel();
+  playRandomChannel();
 }
 
 /* ================= CONTROLS ================= */
@@ -263,12 +252,8 @@ document.body.addEventListener("click", () => {
   if (!poweredOn && playerReady) powerOn();
 });
 
-document.getElementById("chUp").onclick = () => {
-  if (poweredOn) tuneChannel(currentChannel + 1);
-};
-
-document.getElementById("chDown").onclick = () => {
-  if (poweredOn) tuneChannel(currentChannel - 1);
+document.getElementById("skip").onclick = () => {
+  if (poweredOn) playRandomChannel();
 };
 
 document.getElementById("muteBtn").onclick = () => {
@@ -279,8 +264,7 @@ document.getElementById("muteBtn").onclick = () => {
 
 document.addEventListener("keydown", e => {
   if (!poweredOn) return;
-  if (e.key === "ArrowUp") tuneChannel(currentChannel + 1);
-  if (e.key === "ArrowDown") tuneChannel(currentChannel - 1);
+  if (e.key === " ") playRandomChannel();
   if (e.key.toLowerCase() === "m") document.getElementById("muteBtn").click();
 });
 </script>
