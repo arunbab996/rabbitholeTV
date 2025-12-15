@@ -1,29 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>CRT TV</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8" />
+<title>CRT Screen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* CRT screen */
+.screen {
+  position: fixed;
+  inset: 0;
+  background: black;
+  overflow: hidden;
+
+  /* CRT feel */
+  filter: contrast(1.15) saturate(1.2);
+}
+
+/* YouTube video */
+.screen iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  transform: scale(1.02);
+}
+
+/* Scanlines */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.18),
+    rgba(0,0,0,0.18) 1px,
+    transparent 3px,
+    transparent 4px
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Static burst */
+.static {
+  position: absolute;
+  inset: 0;
+  background: url("https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif");
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Hint */
+.hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #0f0;
+  font-family: monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+
+  background: rgba(0,0,0,0.6);
+  z-index: 7;
+}
+</style>
 </head>
+
 <body>
 
-<div class="tv-container">
-
-  <!-- CRT SCREEN -->
-  <div class="screen off" id="screen">
-    <div class="static" id="static"></div>
-    <div class="hint" id="hint">CLICK TO TURN ON</div>
-  </div>
-
-  <!-- TV FRAME -->
-  <img src="tv-frame.jpg" class="tv-frame" />
-
+<div class="screen" id="screen">
+  <div class="static" id="static"></div>
+  <div class="scanlines"></div>
+  <div class="hint" id="hint">CLICK TO WATCH</div>
 </div>
 
 <script>
-/* ---------- KURZGESAGT VIDEO IDS ---------- */
-/* (finite list = reliable random) */
+/* Kurzgesagt video IDs (finite = reliable) */
 const videos = [
   "hOfRN0KihOU",
   "zBkVCpbNnkU",
@@ -40,9 +104,8 @@ const screen = document.getElementById("screen");
 const staticFx = document.getElementById("static");
 const hint = document.getElementById("hint");
 
-let poweredOn = false;
+let started = false;
 
-/* ---------- HELPERS ---------- */
 function randomVideo() {
   return videos[Math.floor(Math.random() * videos.length)];
 }
@@ -52,7 +115,7 @@ function randomStart() {
 }
 
 function burstStatic() {
-  staticFx.style.opacity = "0.35";
+  staticFx.style.opacity = "0.4";
   setTimeout(() => staticFx.style.opacity = "0", 250);
 }
 
@@ -66,19 +129,16 @@ function playRandom() {
       allowfullscreen>
     </iframe>
     <div class="static" id="static"></div>
+    <div class="scanlines"></div>
   `;
 }
 
-/* ---------- CLICK TO POWER / CHANGE ---------- */
 document.body.addEventListener("click", () => {
-  if (!poweredOn) {
-    screen.classList.remove("off");
+  if (!started) {
     hint.style.display = "none";
-    playRandom();
-    poweredOn = true;
-  } else {
-    playRandom();
+    started = true;
   }
+  playRandom();
 });
 </script>
 
