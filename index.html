@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>TV Screen</title>
+<title>CRT TV</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <style>
@@ -23,7 +23,35 @@ html, body {
   filter: contrast(1.1) saturate(1.15);
 }
 
-/* Overlays */
+/* Player container */
+#player {
+  width: 100%;
+  height: 100%;
+}
+
+/* Prevent hover UI */
+#player iframe {
+  pointer-events: none;
+}
+
+/* CRT top mask (hides title) */
+.crt-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.95),
+    rgba(0,0,0,0.75),
+    rgba(0,0,0,0)
+  );
+  z-index: 9;
+  pointer-events: none;
+}
+
+/* Scanlines */
 .scanlines {
   position: absolute;
   inset: 0;
@@ -38,6 +66,7 @@ html, body {
   z-index: 5;
 }
 
+/* Static */
 .static {
   position: absolute;
   inset: 0;
@@ -47,6 +76,7 @@ html, body {
   z-index: 6;
 }
 
+/* Channel label */
 .channel {
   position: absolute;
   top: 16px;
@@ -54,16 +84,17 @@ html, body {
   color: #0f0;
   font-size: 18px;
   text-shadow: 0 0 6px #0f0;
-  z-index: 7;
+  z-index: 10;
 }
 
+/* Controls */
 .controls {
   position: absolute;
   bottom: 20px;
   right: 20px;
   display: flex;
   gap: 10px;
-  z-index: 7;
+  z-index: 10;
 }
 
 button {
@@ -74,6 +105,7 @@ button {
   cursor: pointer;
 }
 
+/* Hint */
 .hint {
   position: absolute;
   inset: 0;
@@ -83,7 +115,7 @@ button {
   color: #0f0;
   font-size: 20px;
   background: rgba(0,0,0,0.6);
-  z-index: 8;
+  z-index: 11;
 }
 </style>
 </head>
@@ -91,8 +123,10 @@ button {
 <body>
 
 <div class="screen">
+
   <div id="player"></div>
 
+  <div class="crt-mask"></div>
   <div class="scanlines"></div>
   <div class="static" id="static"></div>
 
@@ -104,43 +138,80 @@ button {
   </div>
 
   <div class="hint" id="hint">LOADING TV…</div>
+
 </div>
 
-<!-- YouTube Player API -->
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-/* ---------------- CHANNELS ---------------- */
+/* ---------------- CHANNEL DEFINITIONS ---------------- */
 
 const CHANNELS = {
-  1: { videos: ["GO5FwsblpT8", "aqz-KE-bpKQ"] },
-  2: { videos: ["6_b7RDuLwcI", "8Yy6nF6XKpI"] },
-  3: { videos: ["lM02vNMRRB0"] }
+  1: {
+    name: "SPACE",
+    videos: [
+      "GO5FwsblpT8","aqz-KE-bpKQ","lM02vNMRRB0",
+      "1w8Z0UOXVaY","oAVjF_7ensg","EEIk7gwjgIM",
+      "3uD6FJtpRZ4","yS1ibDImAYU","fYzJqS3x0Jc"
+    ]
+  },
+  2: {
+    name: "SCIENCE",
+    videos: [
+      "6_b7RDuLwcI","8Yy6nF6XKpI","uD4izuDMUQA",
+      "zBkVCpbNnkU","iA6wRgwl7k0","r6w2M50_Xdk",
+      "QOCaacO8wus","cK-OGB5GxC0"
+    ]
+  },
+  3: {
+    name: "CHILL",
+    videos: [
+      "lM02vNMRRB0","aqz-KE-bpKQ","8COwK2tAnfs",
+      "XHTrLYShBRQ","HluANRwPyNo","5qap5aO4i9A",
+      "DWcJFNfaw9c"
+    ]
+  }
 };
 
-let currentChannel = 1;
+/* ---------------- STATE ---------------- */
+
 let player = null;
 let playerReady = false;
-let muted = true;
 let poweredOn = false;
+let muted = true;
+let currentChannel = 1;
+const lastPlayed = {};
 
 /* ---------------- HELPERS ---------------- */
 
-function randomFrom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function burstStatic() {
+  const s = document.getElementById("static");
+  s.style.opacity = "0.45";
+  setTimeout(() => s.style.opacity = "0", 300);
 }
 
 function randomStart() {
   return Math.floor(30 + Math.random() * 180);
 }
 
-function burstStatic() {
-  const s = document.getElementById("static");
-  s.style.opacity = "0.4";
-  setTimeout(() => s.style.opacity = "0", 300);
+function pickRandomVideo(ch) {
+  const pool = CHANNELS[ch].videos;
+  if (!lastPlayed[ch]) lastPlayed[ch] = [];
+
+  if (lastPlayed[ch].length >= pool.length - 1) {
+    lastPlayed[ch] = [];
+  }
+
+  let v;
+  do {
+    v = pool[Math.floor(Math.random() * pool.length)];
+  } while (lastPlayed[ch].includes(v));
+
+  lastPlayed[ch].push(v);
+  return v;
 }
 
-/* ---------------- YT API (FIXED) ---------------- */
+/* ---------------- YOUTUBE API ---------------- */
 
 window.onYouTubeIframeAPIReady = function () {
   player = new YT.Player("player", {
@@ -149,6 +220,10 @@ window.onYouTubeIframeAPIReady = function () {
     playerVars: {
       autoplay: 0,
       controls: 0,
+      disablekb: 1,
+      fs: 0,
+      iv_load_policy: 3,
+      modestbranding: 1,
       rel: 0,
       playsinline: 1
     },
@@ -166,7 +241,7 @@ window.onYouTubeIframeAPIReady = function () {
 function tuneChannel(ch) {
   if (!playerReady) return;
 
-  const videoId = randomFrom(CHANNELS[ch].videos);
+  const videoId = pickRandomVideo(ch);
   const start = randomStart();
 
   document.getElementById("channelLabel").textContent = `CH ${ch}`;
@@ -192,9 +267,7 @@ function powerOn() {
 /* ---------------- CONTROLS ---------------- */
 
 document.body.addEventListener("click", () => {
-  if (!poweredOn && playerReady) {
-    powerOn();
-  }
+  if (!poweredOn && playerReady) powerOn();
 });
 
 document.getElementById("skip").onclick = () => {
