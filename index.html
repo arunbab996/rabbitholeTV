@@ -1,59 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>CRT TV</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-<style>
-html, body {
-  margin: 0;
-  height: 100%;
-  background: black;
-  overflow: hidden;
-}
-.tv {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-}
-.frame {
-  position: absolute;
-  inset: 0;
-  object-fit: contain;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-.screen {
-  position: absolute;
-  top: 22%;
-  left: 20%;
-  width: 60%;
-  height: 46%;
-  background: black;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: lime;
-  font-family: monospace;
-  font-size: 20px;
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>CRT TV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<div class="tv">
-  <div class="screen" id="screen">CLICK TO TURN ON</div>
-  <img src="tv-frame.jpg" class="frame">
+<div class="tv-container">
+
+  <!-- CRT SCREEN -->
+  <div class="screen off" id="screen">
+    <div class="static" id="static"></div>
+    <div class="hint" id="hint">CLICK TO TURN ON</div>
+  </div>
+
+  <!-- TV FRAME -->
+  <img src="tv-frame.jpg" class="tv-frame" />
+
 </div>
 
 <script>
-  document.getElementById("screen").addEventListener("click", () => {
-    document.getElementById("screen").innerHTML =
-      "<iframe width='100%' height='100%' src='https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1' frameborder='0' allow='autoplay'></iframe>";
-  });
+/* ---------- KURZGESAGT VIDEO IDS ---------- */
+/* (finite list = reliable random) */
+const videos = [
+  "hOfRN0KihOU",
+  "zBkVCpbNnkU",
+  "uD4izuDMUQA",
+  "xZbcwi7SfZE",
+  "iA6wRgwl7k0",
+  "r6w2M50_Xdk",
+  "QOCaacO8wus",
+  "cK-OGB5GxC0",
+  "8COwK2tAnfs"
+];
+
+const screen = document.getElementById("screen");
+const staticFx = document.getElementById("static");
+const hint = document.getElementById("hint");
+
+let poweredOn = false;
+
+/* ---------- HELPERS ---------- */
+function randomVideo() {
+  return videos[Math.floor(Math.random() * videos.length)];
+}
+
+function randomStart() {
+  return Math.floor(Math.random() * 300);
+}
+
+function burstStatic() {
+  staticFx.style.opacity = "0.35";
+  setTimeout(() => staticFx.style.opacity = "0", 250);
+}
+
+function playRandom() {
+  burstStatic();
+
+  screen.innerHTML = `
+    <iframe
+      src="https://www.youtube.com/embed/${randomVideo()}?autoplay=1&mute=1&start=${randomStart()}&controls=0&rel=0&modestbranding=1"
+      allow="autoplay"
+      allowfullscreen>
+    </iframe>
+    <div class="static" id="static"></div>
+  `;
+}
+
+/* ---------- CLICK TO POWER / CHANGE ---------- */
+document.body.addEventListener("click", () => {
+  if (!poweredOn) {
+    screen.classList.remove("off");
+    hint.style.display = "none";
+    playRandom();
+    poweredOn = true;
+  } else {
+    playRandom();
+  }
+});
 </script>
 
 </body>
