@@ -21,8 +21,6 @@ html, body {
   inset: 0;
   background: black;
   overflow: hidden;
-
-  /* CRT feel */
   filter: contrast(1.1) saturate(1.15);
 }
 
@@ -65,12 +63,9 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-
   color: #0f0;
   font-family: monospace;
   font-size: 20px;
-  letter-spacing: 1px;
-
   background: rgba(0,0,0,0.6);
   z-index: 7;
 }
@@ -86,11 +81,13 @@ html, body {
 </div>
 
 <script>
-/* NASA Live & space streams (all embeddable) */
+/* KNOWN-GOOD EMBEDDABLE VIDEOS (NON-LIVE) */
 const channels = [
-  "https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&controls=0&rel=0",
-  "https://www.youtube.com/embed/nA9UZF-SZoQ?autoplay=1&mute=1&controls=0&rel=0",
-  "https://www.youtube.com/embed/wwMDvPCGeE0?autoplay=1&mute=1&controls=0&rel=0"
+  "https://www.youtube.com/embed/GO5FwsblpT8?autoplay=1&mute=1&controls=0&rel=0",
+  "https://www.youtube.com/embed/6_b7RDuLwcI?autoplay=1&mute=1&controls=0&rel=0",
+  "https://www.youtube.com/embed/lM02vNMRRB0?autoplay=1&mute=1&controls=0&rel=0",
+  "https://www.youtube.com/embed/8Yy6nF6XKpI?autoplay=1&mute=1&controls=0&rel=0",
+  "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1&controls=0&rel=0"
 ];
 
 const screen = document.getElementById("screen");
@@ -104,9 +101,8 @@ function burstStatic() {
   setTimeout(() => staticFx.style.opacity = "0", 250);
 }
 
-function playRandomChannel() {
+function playRandom() {
   burstStatic();
-
   const src = channels[Math.floor(Math.random() * channels.length)];
 
   screen.innerHTML = `
@@ -125,7 +121,7 @@ document.body.addEventListener("click", () => {
     hint.style.display = "none";
     started = true;
   }
-  playRandomChannel();
+  playRandom();
 });
 </script>
 
