@@ -1,13 +1,12 @@
 html, body {
   margin: 0;
-  padding: 0;
   width: 100%;
   height: 100%;
-  background: #000;
+  background: black;
   overflow: hidden;
 }
 
-/* Main container */
+/* Container */
 .tv-container {
   position: relative;
   width: 100vw;
@@ -25,11 +24,11 @@ html, body {
   pointer-events: none;
 }
 
-/* CRT screen window (tuned for your image) */
+/* CRT screen window */
 .screen {
   position: absolute;
 
-  /* 🔧 Screen placement */
+  /* Tuned for your image */
   top: 22%;
   left: 20%;
   width: 60%;
@@ -48,37 +47,21 @@ html, body {
   filter: brightness(0);
 }
 
-/* YouTube player */
-#player iframe {
+/* YouTube iframe */
+.screen iframe {
   width: 100%;
   height: 100%;
   border: none;
 }
 
-/* Scanlines */
-.scanlines {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.15),
-    rgba(0,0,0,0.15) 1px,
-    transparent 3px,
-    transparent 4px
-  );
-  pointer-events: none;
-  z-index: 6;
-}
-
-/* Static burst */
+/* Static overlay */
 .static {
   position: absolute;
   inset: 0;
   background: url("https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif");
   opacity: 0;
   pointer-events: none;
-  z-index: 7;
-  transition: opacity 0.2s;
+  z-index: 6;
 }
 
 /* Click hint */
@@ -95,10 +78,5 @@ html, body {
   letter-spacing: 1px;
 
   background: rgba(0,0,0,0.6);
-  z-index: 8;
-}
-
-/* Hide hint when TV is on */
-.screen:not(.off) .hint {
-  display: none;
+  z-index: 7;
 }
