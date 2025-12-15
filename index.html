@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>CRT Screen</title>
+<title>TV Screen</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <style>
@@ -15,21 +15,25 @@ html, body {
   cursor: pointer;
 }
 
+/* Screen */
 .screen {
   position: fixed;
   inset: 0;
   background: black;
   overflow: hidden;
-  filter: contrast(1.15) saturate(1.2);
+
+  /* CRT feel */
+  filter: contrast(1.1) saturate(1.15);
 }
 
+/* Video */
 .screen iframe {
   width: 100%;
   height: 100%;
   border: none;
-  transform: scale(1.02);
 }
 
+/* Scanlines */
 .scanlines {
   position: absolute;
   inset: 0;
@@ -44,6 +48,7 @@ html, body {
   z-index: 5;
 }
 
+/* Static */
 .static {
   position: absolute;
   inset: 0;
@@ -53,15 +58,19 @@ html, body {
   z-index: 6;
 }
 
+/* Hint */
 .hint {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+
   color: #0f0;
   font-family: monospace;
   font-size: 20px;
+  letter-spacing: 1px;
+
   background: rgba(0,0,0,0.6);
   z-index: 7;
 }
@@ -73,12 +82,16 @@ html, body {
 <div class="screen" id="screen">
   <div class="static" id="static"></div>
   <div class="scanlines"></div>
-  <div class="hint" id="hint">CLICK TO WATCH</div>
+  <div class="hint" id="hint">CLICK TO TURN ON</div>
 </div>
 
 <script>
-/* Kurzgesagt OFFICIAL uploads playlist */
-const PLAYLIST_ID = "UUj0yQnbV9nNqgFjz5uQH0nA";
+/* NASA Live & space streams (all embeddable) */
+const channels = [
+  "https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1&controls=0&rel=0",
+  "https://www.youtube.com/embed/nA9UZF-SZoQ?autoplay=1&mute=1&controls=0&rel=0",
+  "https://www.youtube.com/embed/wwMDvPCGeE0?autoplay=1&mute=1&controls=0&rel=0"
+];
 
 const screen = document.getElementById("screen");
 const staticFx = document.getElementById("static");
@@ -86,32 +99,19 @@ const hint = document.getElementById("hint");
 
 let started = false;
 
-function randomIndex() {
-  return Math.floor(Math.random() * 50);
-}
-
-function randomStart() {
-  return Math.floor(Math.random() * 300);
-}
-
 function burstStatic() {
   staticFx.style.opacity = "0.4";
   setTimeout(() => staticFx.style.opacity = "0", 250);
 }
 
-function playRandomFromPlaylist() {
+function playRandomChannel() {
   burstStatic();
+
+  const src = channels[Math.floor(Math.random() * channels.length)];
 
   screen.innerHTML = `
     <iframe
-      src="https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}
-           &index=${randomIndex()}
-           &start=${randomStart()}
-           &autoplay=1
-           &mute=1
-           &controls=0
-           &rel=0
-           &modestbranding=1"
+      src="${src}"
       allow="autoplay"
       allowfullscreen>
     </iframe>
@@ -125,7 +125,7 @@ document.body.addEventListener("click", () => {
     hint.style.display = "none";
     started = true;
   }
-  playRandomFromPlaylist();
+  playRandomChannel();
 });
 </script>
 
