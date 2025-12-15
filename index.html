@@ -2,27 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CRT Channel TV</title>
+  <title>CRT TV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <div class="tv-container">
-  <!-- Screen mask -->
-  <div class="screen">
-    <iframe
-      id="player"
-      allow="autoplay; encrypted-media"
-      allowfullscreen>
-    </iframe>
 
+  <!-- CRT Screen -->
+  <div class="screen off" id="screen">
+    <div id="player"></div>
     <div class="scanlines"></div>
-    <div class="vignette"></div>
-    <div class="channel-label">CH <span id="ch">1</span></div>
+    <div class="static"></div>
   </div>
+
+  <!-- Channel knob -->
+  <div class="knob" id="knob"></div>
 
   <!-- TV frame -->
   <img src="tv-frame.jpg" class="tv-frame" />
+
 </div>
 
 <script src="tv.js"></script>
